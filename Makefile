@@ -20,3 +20,11 @@ docs_view:
 docs_save:
 	@echo Save documentation to docs...
 	pdoc src -o docs
+
+eda:
+	@echo Exploratory Data Analysis...
+	python src/data/data_explorer.py
+
+feature_eng:
+	@echo Applying Feature Engineering To Data...
+	python src/features/data_preprocessing.py

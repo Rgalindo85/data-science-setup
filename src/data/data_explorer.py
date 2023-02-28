@@ -15,7 +15,7 @@ def main(config: DictConfig):
     """Function to process the data"""
 
     raw_path = abspath(config.raw.path)
-    print(f"Process data using {raw_path}")
+    logging.info(f"Process data using {raw_path}")
 
     df = pd.read_csv(raw_path)
 
