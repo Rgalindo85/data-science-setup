@@ -4,5 +4,11 @@ raw:
 feature:
   path: data/interim/Housing.csv
 
+input_model:
+  train_path: data/model_input/train.csv
+  test_path: data/model_input/test.csv
+
 plots:
   path: reports/figures
+
+target: price
