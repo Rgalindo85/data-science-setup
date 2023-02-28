@@ -1,0 +1,14 @@
+# hydra outputs
+outputs/*
+
+# vscode configuration files
+.vscode/*
+
+# data
+*.csv
+
+# plots
+*.png
+
+# python miscellaneus
+*.pyc

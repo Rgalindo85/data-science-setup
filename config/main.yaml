@@ -1,0 +1,5 @@
+raw:
+  path: data/raw/Housing.csv
+
+plots:
+  path: reports/figures
