@@ -40,3 +40,10 @@ def draw_categorical_features(data: pd.DataFrame, features: list, outpath: str):
             title=col,
             filename=os.path.join(outpath, f"{col}_barplot.png"),
         )
+
+
+def draw_pca_plots(model: any, outpath: str):
+
+    # Explained variance
+    fig, _ = model.plot()
+    fig.savefig(os.path.join(outpath, "models", "pca", "explained_variance.png"))

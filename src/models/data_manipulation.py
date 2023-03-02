@@ -5,7 +5,6 @@ from omegaconf import DictConfig
 
 import logging
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 
 
 @hydra.main(config_path="../../config", config_name="main")
@@ -28,16 +27,11 @@ def make_datasets(data: pd.DataFrame, config: DictConfig):
         X, y, train_size=0.8, test_size=0.2, random_state=42
     )
 
-    scaler = StandardScaler()
-    X_train_std = scaler.fit_transform(X_train)
-    X_train_std = pd.DataFrame(X_train_std, columns=X.columns)
-    X_train_std["price"] = y_train
-    X_train_std.to_csv(abspath(config.input_model.train_path), index=False)
+    X_train["price"] = y_train
+    X_train.to_csv(abspath(config.input_model.train_path), index=False)
 
-    X_test_std = scaler.transform(X_test)
-    X_test_std = pd.DataFrame(X_test_std, columns=X.columns)
-    X_test_std["price"] = y_test
-    X_test_std.to_csv(abspath(config.input_model.test_path), index=False)
+    X_test["price"] = y_test
+    X_test.to_csv(abspath(config.input_model.test_path), index=False)
 
 
 if __name__ == "__main__":

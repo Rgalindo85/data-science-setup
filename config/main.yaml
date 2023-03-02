@@ -12,3 +12,6 @@ plots:
   path: reports/figures
 
 target: price
+
+models:
+  path: models
