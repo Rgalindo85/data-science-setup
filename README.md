@@ -34,7 +34,7 @@ This will create a directory called `great_expectations` with the next structure
    └──  validations
 ```
 
-2. Connect to Data
+2. Connect to Data:
 As an example 2 csv files can be found at `data/model_input`, `train.csv` and `test.csv`.
 
 ````
@@ -42,13 +42,13 @@ $ great_expectations --v3-api datasource new
 ````
 Here you will be asked about the data source and prompt to a jupyter notebook, replace datasource_name to train and run the cells. This notebook will assist you to write the yaml file to configure you data source.
 
-3. Create the expectations
+3. Create the expectations:
 ````
 great_expectations --v3-api suite new
 ````
 This will prompt a notebook to assist you to create the JSON file with the expectations that will be located at `great_expectations/expectations/train/warning.json`
 
-4. Validate new data
+4. Validate new data:
 ````
 great_expectations --v3-api checkpoint new test_checkpoint
 ````

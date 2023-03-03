@@ -4,31 +4,43 @@ from hydra.utils import to_absolute_path as abspath
 from omegaconf import DictConfig
 
 import logging
+from prefect import task
+from prefect import flow
 
 
-@hydra.main(config_path="../../config", config_name="main")
-def main(config: DictConfig):
-
-    raw_path = abspath(config.raw.path)
-    logging.info(f"Process data using {raw_path}")
-
-    df = pd.read_csv(raw_path)
-    df_fe = clean_data(data=df)
-
-    interim_path = abspath(config.feature.path)
-    df_fe.to_csv(interim_path, index=False)
-
-
-def clean_data(data: pd.DataFrame) -> pd.DataFrame:
-
+@flow
+def process_data():
+    config = load_config()
+    data = get_data(config)
     data = remove_duplicates(data=data)
     check_empty_values(data=data)
     data = transform_categorical_features(data=data)
     data = remove_numerical_outliers(data=data)
+    save_data(data=data, config=config)
 
-    return data
+
+@task
+def save_data(data: pd.DataFrame, config: DictConfig):
+    interim_path = abspath(config.feature.path)
+    data.to_csv(interim_path, index=False)
 
 
+@task
+def get_data(config: DictConfig):
+    raw_path = abspath(config.raw.path)
+    logging.info(f"Process data using {raw_path}")
+    df = pd.read_csv(raw_path)
+    return df
+
+
+@task
+def load_config():
+    with hydra.initialize(config_path="../../config"):
+        config = hydra.compose(config_name="main")
+    return config
+
+
+@task
 def remove_numerical_outliers(data: pd.DataFrame):
     logger = logging.getLogger("remove_numerical_outliers")
 
@@ -54,6 +66,7 @@ def remove_numerical_outliers(data: pd.DataFrame):
     return data
 
 
+@task
 def transform_categorical_features(data: pd.DataFrame) -> pd.DataFrame:
     logger = logging.getLogger("transform_categorical_features")
 
@@ -79,6 +92,7 @@ def transform_categorical_features(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
+@task
 def check_empty_values(data: pd.DataFrame):
     logger = logging.getLogger("clean_data")
 
@@ -88,6 +102,7 @@ def check_empty_values(data: pd.DataFrame):
     logger.info(f"\n{nvc}")
 
 
+@task
 def remove_duplicates(data: pd.DataFrame) -> pd.DataFrame:
     logger = logging.getLogger("remove_duplicates")
 
@@ -114,4 +129,4 @@ if __name__ == "__main__":
         # filename=f'data/logs/fermentation_{farmid}_{dt_string}.log'
     )
 
-    main()
+    process_data()
