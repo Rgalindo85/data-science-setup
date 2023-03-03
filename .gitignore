@@ -12,3 +12,6 @@ outputs/*
 
 # python miscellaneus
 *.pyc
+
+# great expectations
+great_expectations/*
