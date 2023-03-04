@@ -7,60 +7,98 @@ from omegaconf import DictConfig
 import os
 import joblib
 import logging
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import PCA
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 
 from pca import pca
 from visualization import plotter
 
+import wandb
+
 
 @hydra.main(config_path="../../config", config_name="main")
 def main(config: DictConfig):
     pass
 
-    data_path = abspath(config.input_model.train_path)
-    df = pd.read_csv(data_path)
+    train_path = abspath(config.input_model.train_path)
+    df_train = pd.read_csv(train_path)
 
-    target = config.target
-    plots_path = abspath(config.plots.path)
-    explore_dim_reduction(data=df, target=target, outpath=plots_path)
+    test_path = abspath(config.input_model.test_path)
+    df_test = pd.read_csv(test_path)
 
-    train_model(data=df, config=config)
+    # target = config.target
+    # plots_path = abspath(config.plots.path)
+    # explore_dim_reduction(data=df, target=target, outpath=plots_path)
+
+    models = {
+        "LinearRegression": LinearRegression(),
+        "Ridge": Ridge(),
+        "Lasso": Lasso(),
+        "ElasticNet": ElasticNet(),
+    }
+
+    for name, model in models.items():
+        train_model(
+            data_train=df_train,
+            data_test=df_test,
+            config=config,
+            name=name,
+            model=model,
+        )
 
 
-def train_model(data: pd.DataFrame, config: DictConfig):
+def train_model(
+    data_train: pd.DataFrame,
+    data_test: pd.DataFrame,
+    config: DictConfig,
+    name: str,
+    model: any,
+):
     logger = logging.getLogger("train_model")
 
-    model = Pipeline(
+    wandb.init(project="housing", group=name, reinit=True)  # Group experiments by model
+
+    model_pipe = Pipeline(
         [
             ("std_scaler", StandardScaler()),
+            # ('poly_feat', PolynomialFeatures()),
             ("pca", PCA(0.95)),
-            ("lin_reg", LinearRegression()),
+            (name, model),
         ]
     )
 
     target = config.target
 
-    data.dropna(inplace=True)
-    X = data.drop(target, axis=1)
-    y = data[target]
+    data_train.dropna(inplace=True)
+    X_train = data_train.drop(target, axis=1)
+    y_train = data_train[target]
 
-    model.fit(X, y)
+    data_test.dropna(inplace=True)
+    X_test = data_test.drop(target, axis=1)
+    y_test = data_test[target]
 
-    predictions = model.predict(X)
-    rmse = np.sqrt(mean_squared_error(y_true=y, y_pred=predictions))
+    model_pipe.fit(X_train, y_train)
 
-    r2 = r2_score(y_true=y, y_pred=predictions)
+    predictions = model_pipe.predict(X_test)
+    rmse = np.sqrt(mean_squared_error(y_true=y_test, y_pred=predictions))
+
+    r2 = r2_score(y_true=y_test, y_pred=predictions)
+
+    wandb.log({"rmse": rmse, "r2": r2})
 
     logger.info(f"Train RMSE: {round(rmse, 3)}")
     logger.info(f"Train R2: {round(r2, 3)}")
 
+    wandb.sklearn.plot_regressor(
+        model_pipe, X_train, X_test, y_train, y_test, model_name=name
+    )
+
     model_path = abspath(config.models.path)
-    joblib.dump(model, os.path.join(model_path, "price_liner_reg.joblib"))
+    joblib.dump(model_pipe, os.path.join(model_path, f"price_{name}.joblib"))
 
 
 def explore_dim_reduction(data: pd.DataFrame, target: str, outpath: str):
@@ -84,7 +122,7 @@ def run_pca(data: pd.DataFrame, target: str, outpath: str):
 
 if __name__ == "__main__":
     # Basic configuration for logging
-    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
+    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.captureWarnings(True)
     logging.basicConfig(
         level=logging.INFO,

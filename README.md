@@ -58,3 +58,9 @@ to rerun the validation
 ````
 great_expectations --v3-api checkpoint run test_checkpoint
 ````
+
+## Prefect
+After running you can monitor your flows using the prefect server
+````
+prefect server start
+````
