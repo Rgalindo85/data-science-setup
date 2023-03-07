@@ -15,7 +15,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 
 from pca import pca
-from visualization import plotter
+
+import bentoml
+from src.visualization import plotter
 
 import wandb
 
@@ -60,7 +62,7 @@ def train_model(
 ):
     logger = logging.getLogger("train_model")
 
-    wandb.init(project="housing", group=name, reinit=True)  # Group experiments by model
+    # wandb.init(project="housing", group=name, reinit=True)  # Group experiments by model
 
     model_pipe = Pipeline(
         [
@@ -88,17 +90,19 @@ def train_model(
 
     r2 = r2_score(y_true=y_test, y_pred=predictions)
 
-    wandb.log({"rmse": rmse, "r2": r2})
+    # wandb.log({"rmse": rmse, "r2": r2})
 
     logger.info(f"Train RMSE: {round(rmse, 3)}")
     logger.info(f"Train R2: {round(r2, 3)}")
 
-    wandb.sklearn.plot_regressor(
-        model_pipe, X_train, X_test, y_train, y_test, model_name=name
-    )
+    # wandb.sklearn.plot_regressor(
+    #    model_pipe, X_train, X_test, y_train, y_test, model_name=name
+    # )
 
     model_path = abspath(config.models.path)
     joblib.dump(model_pipe, os.path.join(model_path, f"price_{name}.joblib"))
+
+    bentoml.sklearn.save_model(f"price_{name}_reg", model_pipe)
 
 
 def explore_dim_reduction(data: pd.DataFrame, target: str, outpath: str):

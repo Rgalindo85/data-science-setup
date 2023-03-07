@@ -1,0 +1,9 @@
+stages:
+  process_data:
+    cmd: src/features/data_preprocessing.py
+    deps:
+      - config/main.yaml
+      - data/raw/Housing.csv
+      - src/features/data_preprocessing.py
+    outs:
+      - data/interim/Housing.csv
